@@ -24,6 +24,11 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
+    public boolean isEnabled() {
+        return user.isEnabled();
+    }
+
+    @Override
     public String getPassword() {
         return user.getPassword();
     }

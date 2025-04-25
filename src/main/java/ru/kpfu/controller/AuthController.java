@@ -9,9 +9,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.kpfu.entity.User;
 import ru.kpfu.repository.UserRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Controller
@@ -60,6 +62,24 @@ public class AuthController {
 
         mailSender.send(email);
     }
+
+    @GetMapping("/confirm")
+    public String confirmAccount(@RequestParam("token") String token) {
+        Optional<User> optionalUser = userRepository.findAll().stream()
+                .filter(u -> token.equals(u.getConfirmationToken()))
+                .findFirst();
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setEnabled(true);
+            user.setConfirmationToken(null);
+            userRepository.save(user);
+            return "redirect:/login?confirmed";
+        } else {
+            return "redirect:/login?error=invalidToken";
+        }
+    }
+
 
     @GetMapping("/confirm-info")
     public String confirmationInfo() {
