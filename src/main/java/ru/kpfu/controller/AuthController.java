@@ -1,25 +1,31 @@
 package ru.kpfu.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import ru.kpfu.entity.Role;
 import ru.kpfu.entity.User;
 import ru.kpfu.repository.UserRepository;
 
-import java.util.Set;
+import java.util.UUID;
 
 @Controller
 public class AuthController {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender mailSender;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    @Autowired
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JavaMailSender mailSender) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mailSender = mailSender;
     }
 
     @GetMapping("/register")
@@ -31,16 +37,32 @@ public class AuthController {
     @PostMapping("/register")
     public String registerUser(@ModelAttribute("user") User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        Role userRole = new Role();
-        userRole.setId(1L);
-        user.setRoles(Set.of(userRole));
+        user.setEnabled(false);
+        user.setConfirmationToken(UUID.randomUUID().toString());
 
         userRepository.save(user);
-        return "redirect:/login";
+
+        sendConfirmationEmail(user);
+
+        return "redirect:/confirm-info";
     }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login";
+    private void sendConfirmationEmail(User user) {
+        String subject = "Подтверждение регистрации";
+        String confirmationUrl = "http://localhost:8080/confirm?token=" + user.getConfirmationToken();
+        String message = "Здравствуйте, " + user.getUsername() + "!\n\n"
+                + "Пожалуйста, подтвердите регистрацию, перейдя по ссылке:\n" + confirmationUrl;
+
+        SimpleMailMessage email = new SimpleMailMessage();
+        email.setTo(user.getUsername());
+        email.setSubject(subject);
+        email.setText(message);
+
+        mailSender.send(email);
+    }
+
+    @GetMapping("/confirm-info")
+    public String confirmationInfo() {
+        return "confirm-info";
     }
 }

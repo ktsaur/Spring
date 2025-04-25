@@ -1,4 +1,4 @@
-package ru.kpfu.service;
+package ru.kpfu.service.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,4 +25,5 @@ public class CustomUserDetailsService implements UserDetailsService {
         return user.map(CustomUserDetails::new)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
     }
+
 }

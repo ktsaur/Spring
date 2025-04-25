@@ -1,4 +1,4 @@
-package ru.kpfu.service;
+package ru.kpfu.service.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
